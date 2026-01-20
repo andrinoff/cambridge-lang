@@ -20,7 +20,25 @@ This project implements an interpreter for the pseudocode specification used in 
 
 ## Installation
 
-### From Source
+### 🍺 Homebrew
+
+```bash
+brew tap andrinoff/cambridge
+brew install cambridge
+brew install cambridge-lsp # Optinal, Language Server Protocol
+```
+
+### Snapcraft
+
+```bash
+snap install cambridge
+```
+
+### Already built binaries
+
+I build all binaries, and they are available [here](https://github.com/andrinoff/cambridge-lang/releases)
+
+### Build From Source
 
 ```bash
 git clone https://github.com/andrinoff/cambridge-lang.git
