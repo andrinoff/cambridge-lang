@@ -23,7 +23,7 @@ build:
 # Build the Language Server Protocol
 .PHONY: build-lsp
 build-lsp:
-	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/cambridge-lsp
+	$(GO) build $(GOFLAGS) -o cambridge-lsp ./cmd/cambridge-lsp
 
 # Build with debug symbols
 .PHONY: build-debug
