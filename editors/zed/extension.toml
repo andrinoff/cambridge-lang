@@ -8,7 +8,7 @@ repository = "https://github.com/andrinoff/cambridge-lang"
 
 [grammars.cambridge]
 repository = "https://github.com/andrinoff/cambridge-lang"
-rev = "v0.1.3"
+rev = "master"
 path = "tree-sitter-cambridge"
 
 [language_servers.cambridge-lsp]
