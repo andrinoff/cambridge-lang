@@ -250,27 +250,3 @@ jobs:
           git add Formula/
           git commit -m "Update formulae to v${{ env.NEW_VERSION }}" || echo "No changes to commit"
           git push
-
-      # --- 12. PUBLISH TO SNAPCRAFT ---
-      - name: Install Snapcraft
-        uses: samber/actions-snapcraft@v1
-        with:
-          snapcraft_token: ${{ secrets.SNAPCRAFT_TOKEN }}
-
-      - name: Build and Publish Snap
-        env:
-          SNAPCRAFT_TOKEN: ${{ secrets.SNAPCRAFT_TOKEN }}
-        run: |
-          if [ -z "$SNAPCRAFT_TOKEN" ]; then
-            echo "SNAPCRAFT_TOKEN not set, skipping Snapcraft publish"
-            exit 0
-          fi
-
-          # Build snap
-          snapcraft --use-lxd
-
-          # Find the built snap file
-          SNAP_FILE=$(ls *.snap | head -1)
-
-          # Upload to Snapcraft store
-          snapcraft upload "$SNAP_FILE" --release=stable
