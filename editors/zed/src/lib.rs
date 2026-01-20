@@ -1,3 +1,4 @@
+use std::fs;
 use zed_extension_api::{self as zed, Result};
 
 struct CambridgeExtension {
@@ -10,28 +11,69 @@ impl CambridgeExtension {
         language_server_id: &zed::LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        // 1. If we already found the binary, return it
+        // 1. Check if we already have the path cached in memory
         if let Some(path) = &self.cached_binary_path {
-            if std::fs::metadata(path)
-                .map(|m| m.is_file())
-                .unwrap_or(false)
-            {
+            if fs::metadata(path).map(|m| m.is_file()).unwrap_or(false) {
                 return Ok(path.clone());
             }
         }
 
-        // 2. Look for 'cambridge-lsp' in the user's PATH
-        if let Some(path) = worktree.which("cambridge-lsp") {
-            self.cached_binary_path = Some(path.clone());
-            return Ok(path);
+        // 2. Check if the LSP is already downloaded in the extension's support directory
+        // Zed gives every extension a writable folder for this exact purpose.
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &zed::LanguageServerInstallationStatus::CheckingForUpdate,
+        );
+
+        let binary_name = "cambridge-lsp"; // Name of the file on disk
+        let binary_path = format!("./{}", binary_name); // Path relative to the support dir
+
+        if !fs::metadata(&binary_path)
+            .map(|m| m.is_file())
+            .unwrap_or(false)
+        {
+            // 3. DOWNLOAD IT if missing
+            zed::set_language_server_installation_status(
+                language_server_id,
+                &zed::LanguageServerInstallationStatus::Downloading,
+            );
+
+            // Determine the user's OS and Architecture
+            let (platform, arch) = zed::current_platform();
+
+            // Construct the download URL based on the platform
+            let download_url = match (platform, arch) {
+                (zed::Os::Mac, zed::Architecture::Aarch64) =>
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.0.1/cambridge-lsp-macos-arm64",
+                (zed::Os::Mac, zed::Architecture::X8664) =>
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.0.1/cambridge-lsp-macos-intel",
+                (zed::Os::Linux, _) =>
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.0.1/cambridge-lsp-linux",
+                (zed::Os::Windows, _) =>
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.0.1/cambridge-lsp.exe",
+                _ => return Err("Unsupported platform".into()),
+            };
+
+            // Download the file
+            zed::download_file(
+                &download_url,
+                &binary_path,
+                zed::DownloadedFileType::Uncompressed, // Or Gzip/Zip if you compress it
+            )
+            .map_err(|e| format!("Failed to download LSP: {}", e))?;
+
+            // Make it executable (Unix only)
+            zed::make_file_executable(&binary_path)?;
         }
 
-        // 3. Fallback: If not in PATH, you might look in the project folder
-        // For development, we assume the user has built it and put it in PATH
-        Err(format!(
-            "Protocol error: 'cambridge-lsp' binary not found. \
-            Please ensure you have built the language server and added it to your PATH."
-        ))
+        self.cached_binary_path = Some(binary_path.clone());
+
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &zed::LanguageServerInstallationStatus::None,
+        );
+
+        Ok(binary_path)
     }
 }
 
