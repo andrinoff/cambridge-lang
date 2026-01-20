@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/andrinoff/cambridge-lang/interpreter"
+	"github.com/andrinoff/cambridge-lang/pkg/interpreter"
 )
 
 func init() {

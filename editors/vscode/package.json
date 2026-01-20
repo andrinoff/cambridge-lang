@@ -1,0 +1,50 @@
+{
+  "name": "cambridge-pseudo",
+  "displayName": "Cambridge Pseudocode",
+  "version": "0.0.1",
+  "publisher": "andrinoff",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "activationEvents": [
+    "onLanguage:cambridge-pseudo"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "cambridge-pseudo",
+        "aliases": [
+          "Cambridge Pseudocode",
+          "pseudo"
+        ],
+        "extensions": [
+          ".pseudo",
+          ".psc"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cambridge-pseudo",
+        "scopeName": "source.pseudo",
+        "path": "./syntaxes/cambridge.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.70.0",
+    "@types/node": "^16.x",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.19.0"
+  }
+}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/andrinoff/cambridge-lang/ast"
+	"github.com/andrinoff/cambridge-lang/pkg/ast"
 )
 
 // ObjectType represents the type of an object

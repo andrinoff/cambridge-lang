@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/andrinoff/cambridge-lang/ast"
-	"github.com/andrinoff/cambridge-lang/lexer"
-	"github.com/andrinoff/cambridge-lang/token"
+	"github.com/andrinoff/cambridge-lang/pkg/ast"
+	"github.com/andrinoff/cambridge-lang/pkg/lexer"
+	"github.com/andrinoff/cambridge-lang/pkg/token"
 )
 
 // Operator precedence levels

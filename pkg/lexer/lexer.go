@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/andrinoff/cambridge-lang/token"
+	"github.com/andrinoff/cambridge-lang/pkg/token"
 )
 
 // Lexer performs lexical analysis on source code

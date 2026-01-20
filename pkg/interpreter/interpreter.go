@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/andrinoff/cambridge-lang/ast"
+	"github.com/andrinoff/cambridge-lang/pkg/ast"
 )
 
 // Interpreter evaluates the AST

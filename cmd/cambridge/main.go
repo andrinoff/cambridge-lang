@@ -9,10 +9,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/andrinoff/cambridge-lang/builtins"
-	"github.com/andrinoff/cambridge-lang/interpreter"
-	"github.com/andrinoff/cambridge-lang/lexer"
-	"github.com/andrinoff/cambridge-lang/parser"
+	"github.com/andrinoff/cambridge-lang/pkg/builtins"
+	"github.com/andrinoff/cambridge-lang/pkg/interpreter"
+	"github.com/andrinoff/cambridge-lang/pkg/lexer"
+	"github.com/andrinoff/cambridge-lang/pkg/parser"
 )
 
 const VERSION = "1.0.0"
@@ -77,7 +77,7 @@ func runFile(filename string) {
 func startREPL() {
 	fmt.Printf("Cambridge Pseudocode v%s\n", VERSION)
 	fmt.Println("Based on Cambridge International AS & A Level Computer Science 9618")
-	fmt.Println("Type 'EXIT' to quit, 'HELP' for help\n")
+	fmt.Printf("Type 'EXIT' to quit, 'HELP' for help\n")
 
 	reader := bufio.NewReader(os.Stdin)
 	interp := interpreter.New()

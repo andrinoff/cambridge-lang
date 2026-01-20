@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/andrinoff/cambridge-lang/token"
+	"github.com/andrinoff/cambridge-lang/pkg/token"
 )
 
 // Node is the base interface for all AST nodes
