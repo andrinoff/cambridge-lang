@@ -1,6 +1,6 @@
 id = "cambridge-pseudo"
 name = "Cambridge Pseudocode"
-version = "0.1.4"
+version = "0.1.5"
 schema_version = 1
 authors = ["andrinoff <me@andrinoff.com>"]
 description = "Support for Cambridge International AS & A Level Pseudocode"
@@ -8,7 +8,7 @@ repository = "https://github.com/andrinoff/cambridge-lang"
 
 [grammars.cambridge]
 repository = "https://github.com/andrinoff/cambridge-lang"
-rev = "v0.1.4"
+rev = "v0.1.5"
 path = "tree-sitter-cambridge"
 
 [language_servers.cambridge-lsp]
