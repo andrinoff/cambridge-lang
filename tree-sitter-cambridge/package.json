@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-cambridge",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Tree-sitter grammar for Cambridge International AS & A Level Pseudocode",
   "main": "bindings/node",
   "types": "bindings/node",
