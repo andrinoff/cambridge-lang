@@ -112,7 +112,7 @@ jobs:
           sed -i "0,/^version = \".*\"/s//version = \"$NEW_VERSION\"/" tree-sitter-cambridge/Cargo.toml
 
           # K. Snapcraft version
-          sed -i "s/^version: '.*'/version: '$NEW_VERSION'/" snap/snapcraft.yaml
+          sed -i "s/^version: '.*'/version: '$NEW_VERSION'/" snapcraft.yaml
 
       # --- 4. COMPILE GO BINARIES ---
       - name: Build Go Binaries
@@ -214,8 +214,6 @@ jobs:
       - name: Build and Publish Snap
         uses: snapcore/action-build@v1
         id: build-snap
-        with:
-          path: snap
 
       - name: Publish Snap to Store
         uses: snapcore/action-publish@v1
