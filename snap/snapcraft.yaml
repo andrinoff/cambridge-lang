@@ -40,7 +40,7 @@ parts:
   cambridge:
     plugin: go
     source: .
-    source-type: git
+    source-type: local
     build-snaps:
       - go/1.23/stable
     override-build: |
