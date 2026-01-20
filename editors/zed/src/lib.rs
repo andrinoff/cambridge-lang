@@ -68,7 +68,6 @@ impl CambridgeExtension {
             language_server_id,
             &zed::LanguageServerInstallationStatus::None,
         );
-        binary_path = "/"
         Ok(binary_path)
     }
 }

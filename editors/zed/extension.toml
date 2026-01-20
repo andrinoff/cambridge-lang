@@ -5,3 +5,12 @@ schema_version = 1
 authors = ["andrinoff <me@andrinoff.com>"]
 description = "Support for Cambridge International AS & A Level Pseudocode"
 repository = "https://github.com/andrinoff/cambridge-lang"
+
+[grammars.cambridge]
+repository = "https://github.com/andrinoff/cambridge-lang"
+rev = "master"
+path = "tree-sitter-cambridge"
+
+[language_servers.cambridge-lsp]
+name = "Cambridge LSP"
+languages = ["Cambridge Pseudocode"]

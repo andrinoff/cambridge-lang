@@ -1,6 +1,4 @@
 name = "Cambridge Pseudocode"
+grammar = "cambridge"
 path_suffixes = ["pseudo", "psc"]
 line_comments = ["//"]
-
-[language_server]
-command = "cambridge-lsp"
