@@ -42,7 +42,7 @@ parts:
     source: .
     source-type: git
     build-snaps:
-      - go/latest/stable
+      - go/1.23/stable
     override-build: |
       go build -ldflags="-s -w" -o $SNAPCRAFT_PART_INSTALL/bin/cambridge ./cmd/cambridge
       go build -ldflags="-s -w" -o $SNAPCRAFT_PART_INSTALL/bin/cambridge-lsp ./cmd/cambridge-lsp
