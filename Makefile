@@ -2,7 +2,7 @@
 # Based on Cambridge International AS & A Level Computer Science 9618
 
 BINARY_NAME=cambridge
-VERSION=0.1.2
+VERSION=0.1.3
 BUILD_DIR=build
 GO=go
 GOFLAGS=-ldflags="-s -w"
