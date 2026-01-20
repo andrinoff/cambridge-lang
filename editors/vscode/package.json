@@ -3,6 +3,7 @@
   "displayName": "Cambridge Pseudocode Syntax",
   "version": "0.1.0",
   "publisher": "andrinoff",
+  "icon": "logo.jpg",
   "engines": {
     "vscode": "^1.70.0"
   },
