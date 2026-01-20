@@ -210,7 +210,22 @@ jobs:
             echo "VSCE_PAT not set, skipping VS Code Marketplace publish"
           fi
 
-      # --- 11. UPDATE HOMEBREW TAP ---
+      # --- 11. BUILD AND PUBLISH SNAPCRAFT ---
+      - name: Build and Publish Snap
+        uses: snapcore/action-build@v1
+        id: build-snap
+        with:
+          path: snap
+
+      - name: Publish Snap to Store
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.build-snap.outputs.snap }}
+          release: stable
+
+      # --- 12. UPDATE HOMEBREW TAP ---
       - name: Update Homebrew Formulae
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
