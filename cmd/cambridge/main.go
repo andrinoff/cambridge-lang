@@ -220,7 +220,7 @@ For more information, visit:
 }
 
 func printREPLHelp() {
-	fmt.Println(`
+	fmt.Printf(`
 REPL Commands:
   EXIT, QUIT    Exit the REPL
   HELP          Show this help
