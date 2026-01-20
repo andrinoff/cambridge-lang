@@ -23,7 +23,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for release notes generation
+          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -111,22 +111,18 @@ jobs:
           # J. Tree-sitter grammar Cargo.toml
           sed -i "0,/^version = \".*\"/s//version = \"$NEW_VERSION\"/" tree-sitter-cambridge/Cargo.toml
 
+          # K. Snapcraft version
+          sed -i "s/^version: '.*'/version: '$NEW_VERSION'/" snap/snapcraft.yaml
+
       # --- 4. COMPILE GO BINARIES ---
-      # Binary names must match what Zed extension expects in lib.rs
       - name: Build Go Binaries
         run: |
           mkdir -p build_assets
 
-          echo "Building cambridge-lsp-linux..."
+          echo "Building cambridge-lsp binaries..."
           GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-linux ./cmd/cambridge-lsp
-
-          echo "Building cambridge-lsp-macos-intel..."
           GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-macos-intel ./cmd/cambridge-lsp
-
-          echo "Building cambridge-lsp-macos-arm64..."
           GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-macos-arm64 ./cmd/cambridge-lsp
-
-          echo "Building cambridge-lsp.exe..."
           GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp.exe ./cmd/cambridge-lsp
 
           echo "Building cambridge CLI binaries..."
@@ -136,7 +132,19 @@ jobs:
           GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o build_assets/cambridge-macos-arm64 ./cmd/cambridge
           GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-windows.exe ./cmd/cambridge
 
-      # --- 5. PACKAGE VS CODE EXTENSION ---
+      # --- 5. CALCULATE SHA256 CHECKSUMS ---
+      - name: Calculate SHA256 Checksums
+        run: |
+          cd build_assets
+          echo "SHA256_MACOS_INTEL=$(sha256sum cambridge-macos-intel | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_MACOS_ARM64=$(sha256sum cambridge-macos-arm64 | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_LINUX_AMD64=$(sha256sum cambridge-linux-amd64 | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_LINUX_ARM64=$(sha256sum cambridge-linux-arm64 | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_LSP_MACOS_INTEL=$(sha256sum cambridge-lsp-macos-intel | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_LSP_MACOS_ARM64=$(sha256sum cambridge-lsp-macos-arm64 | cut -d' ' -f1)" >> $GITHUB_ENV
+          echo "SHA256_LSP_LINUX=$(sha256sum cambridge-lsp-linux | cut -d' ' -f1)" >> $GITHUB_ENV
+
+      # --- 6. PACKAGE VS CODE EXTENSION ---
       - name: Package VS Code Extension
         working-directory: ./editors/vscode
         run: |
@@ -144,7 +152,7 @@ jobs:
           npm install -g @vscode/vsce
           vsce package --out ../../build_assets/cambridge-vscode-${{ env.NEW_VERSION }}.vsix
 
-      # --- 6. PACKAGE ZED EXTENSION ---
+      # --- 7. PACKAGE ZED EXTENSION ---
       - name: Package Zed Extension
         working-directory: ./editors/zed
         run: |
@@ -157,7 +165,7 @@ jobs:
           zip -r cambridge-zed-${{ env.NEW_VERSION }}.zip zed-extension
           rm -rf zed-extension
 
-      # --- 7. COMMIT & TAG ---
+      # --- 8. COMMIT & TAG ---
       - name: Commit and Push Version Bump
         run: |
           git add -A
@@ -165,7 +173,7 @@ jobs:
           git tag "v${{ env.NEW_VERSION }}"
           git push origin HEAD --tags
 
-      # --- 8. GITHUB RELEASE WITH AUTO-GENERATED NOTES ---
+      # --- 9. GITHUB RELEASE ---
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -189,7 +197,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- 9. PUBLISH TO VS CODE MARKETPLACE ---
+      # --- 10. PUBLISH TO VS CODE MARKETPLACE ---
       - name: Publish to VS Code Marketplace
         working-directory: ./editors/vscode
         env:
@@ -201,3 +209,68 @@ jobs:
           else
             echo "VSCE_PAT not set, skipping VS Code Marketplace publish"
           fi
+
+      # --- 11. UPDATE HOMEBREW TAP ---
+      - name: Update Homebrew Formulae
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set, skipping Homebrew update"
+            exit 0
+          fi
+
+          # Generate cambridge.rb formula
+          sed -e "s/{{VERSION}}/${{ env.NEW_VERSION }}/g" \
+              -e "s/{{SHA256_MACOS_INTEL}}/${{ env.SHA256_MACOS_INTEL }}/g" \
+              -e "s/{{SHA256_MACOS_ARM64}}/${{ env.SHA256_MACOS_ARM64 }}/g" \
+              -e "s/{{SHA256_LINUX_AMD64}}/${{ env.SHA256_LINUX_AMD64 }}/g" \
+              -e "s/{{SHA256_LINUX_ARM64}}/${{ env.SHA256_LINUX_ARM64 }}/g" \
+              .github/formula/cambridge.rb.template > cambridge.rb
+
+          # Generate cambridge-lsp.rb formula
+          sed -e "s/{{VERSION}}/${{ env.NEW_VERSION }}/g" \
+              -e "s/{{SHA256_LSP_MACOS_INTEL}}/${{ env.SHA256_LSP_MACOS_INTEL }}/g" \
+              -e "s/{{SHA256_LSP_MACOS_ARM64}}/${{ env.SHA256_LSP_MACOS_ARM64 }}/g" \
+              -e "s/{{SHA256_LSP_LINUX}}/${{ env.SHA256_LSP_LINUX }}/g" \
+              .github/formula/cambridge-lsp.rb.template > cambridge-lsp.rb
+
+          # Clone the tap repository and update
+          git clone https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/andrinoff/homebrew-cambridge.git tap-repo
+          cd tap-repo
+
+          # Copy formulae
+          mkdir -p Formula
+          cp ../cambridge.rb Formula/
+          cp ../cambridge-lsp.rb Formula/
+
+          # Commit and push
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Formula/
+          git commit -m "Update formulae to v${{ env.NEW_VERSION }}" || echo "No changes to commit"
+          git push
+
+      # --- 12. PUBLISH TO SNAPCRAFT ---
+      - name: Install Snapcraft
+        uses: samber/actions-snapcraft@v1
+        with:
+          snapcraft_token: ${{ secrets.SNAPCRAFT_TOKEN }}
+
+      - name: Build and Publish Snap
+        env:
+          SNAPCRAFT_TOKEN: ${{ secrets.SNAPCRAFT_TOKEN }}
+        run: |
+          if [ -z "$SNAPCRAFT_TOKEN" ]; then
+            echo "SNAPCRAFT_TOKEN not set, skipping Snapcraft publish"
+            exit 0
+          fi
+
+          # Build snap
+          snapcraft --use-lxd
+
+          # Find the built snap file
+          SNAP_FILE=$(ls *.snap | head -1)
+
+          # Upload to Snapcraft store
+          snapcraft upload "$SNAP_FILE" --release=stable

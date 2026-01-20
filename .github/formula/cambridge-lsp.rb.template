@@ -1,0 +1,42 @@
+class CambridgeLsp < Formula
+  desc "Language Server Protocol implementation for Cambridge Pseudocode"
+  homepage "https://github.com/andrinoff/cambridge-lang"
+  version "{{VERSION}}"
+  license "MIT"
+
+  on_macos do
+    on_intel do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-lsp-macos-intel"
+      sha256 "{{SHA256_LSP_MACOS_INTEL}}"
+
+      def install
+        bin.install "cambridge-lsp-macos-intel" => "cambridge-lsp"
+      end
+    end
+
+    on_arm do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-lsp-macos-arm64"
+      sha256 "{{SHA256_LSP_MACOS_ARM64}}"
+
+      def install
+        bin.install "cambridge-lsp-macos-arm64" => "cambridge-lsp"
+      end
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-lsp-linux"
+      sha256 "{{SHA256_LSP_LINUX}}"
+
+      def install
+        bin.install "cambridge-lsp-linux" => "cambridge-lsp"
+      end
+    end
+  end
+
+  test do
+    # LSP doesn't have a version command, just check it exists
+    assert_predicate bin/"cambridge-lsp", :exist?
+  end
+end

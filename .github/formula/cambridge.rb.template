@@ -1,0 +1,50 @@
+class Cambridge < Formula
+  desc "Cambridge International AS & A Level Pseudocode Interpreter and LSP"
+  homepage "https://github.com/andrinoff/cambridge-lang"
+  version "{{VERSION}}"
+  license "MIT"
+
+  on_macos do
+    on_intel do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-macos-intel"
+      sha256 "{{SHA256_MACOS_INTEL}}"
+
+      def install
+        bin.install "cambridge-macos-intel" => "cambridge"
+      end
+    end
+
+    on_arm do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-macos-arm64"
+      sha256 "{{SHA256_MACOS_ARM64}}"
+
+      def install
+        bin.install "cambridge-macos-arm64" => "cambridge"
+      end
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-linux-amd64"
+      sha256 "{{SHA256_LINUX_AMD64}}"
+
+      def install
+        bin.install "cambridge-linux-amd64" => "cambridge"
+      end
+    end
+
+    on_arm do
+      url "https://github.com/andrinoff/cambridge-lang/releases/download/v{{VERSION}}/cambridge-linux-arm64"
+      sha256 "{{SHA256_LINUX_ARM64}}"
+
+      def install
+        bin.install "cambridge-linux-arm64" => "cambridge"
+      end
+    end
+  end
+
+  test do
+    assert_match "Cambridge Pseudocode", shell_output("#{bin}/cambridge version")
+  end
+end

@@ -1,0 +1,48 @@
+name: cambridge
+version: "0.0.2"
+summary: Cambridge International AS & A Level Pseudocode Interpreter
+description: |
+  A complete interpreter for Cambridge International AS & A Level Computer Science
+  (9618) pseudocode specification. Includes both the interpreter CLI and Language
+  Server Protocol (LSP) for editor integration.
+
+  Features:
+  - Full pseudocode syntax support (DECLARE, IF/THEN/ELSE, FOR/WHILE/REPEAT loops)
+  - Procedures and functions with BYVAL/BYREF parameters
+  - Object-oriented programming (CLASS, INHERITS, PUBLIC/PRIVATE)
+  - File handling (OPENFILE, READFILE, WRITEFILE, CLOSEFILE)
+  - Built-in functions (LENGTH, LEFT, RIGHT, MID, RAND, etc.)
+  - Interactive REPL mode
+  - LSP for editor integration
+
+base: core22
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  cambridge:
+    command: bin/cambridge
+    plugs:
+      - home
+      - removable-media
+
+  cambridge-lsp:
+    command: bin/cambridge-lsp
+    plugs:
+      - home
+      - removable-media
+
+parts:
+  cambridge:
+    plugin: go
+    source: .
+    source-type: git
+    build-snaps:
+      - go/latest/stable
+    override-build: |
+      go build -ldflags="-s -w" -o $SNAPCRAFT_PART_INSTALL/bin/cambridge ./cmd/cambridge
+      go build -ldflags="-s -w" -o $SNAPCRAFT_PART_INSTALL/bin/cambridge-lsp ./cmd/cambridge-lsp
