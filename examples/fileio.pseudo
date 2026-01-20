@@ -1,0 +1,38 @@
+// File I/O Example
+// Demonstrates OPENFILE, READFILE, WRITEFILE, CLOSEFILE, and EOF
+
+DECLARE Line : STRING
+DECLARE I : INTEGER
+
+// Write to a file
+OUTPUT "Writing to file..."
+OPENFILE "output.txt" FOR WRITE
+WRITEFILE "output.txt", "Line 1: Hello, World!"
+WRITEFILE "output.txt", "Line 2: This is Cambridge Pseudocode"
+WRITEFILE "output.txt", "Line 3: File handling example"
+FOR I <- 1 TO 5
+    WRITEFILE "output.txt", "Number: " & NUM_TO_STR(I)
+NEXT I
+CLOSEFILE "output.txt"
+OUTPUT "File written successfully!"
+OUTPUT ""
+
+// Read from a file
+OUTPUT "Reading from file..."
+OPENFILE "output.txt" FOR READ
+WHILE NOT EOF("output.txt")
+    READFILE "output.txt", Line
+    OUTPUT "> ", Line
+ENDWHILE
+CLOSEFILE "output.txt"
+OUTPUT ""
+OUTPUT "File read successfully!"
+
+// Append to a file
+OUTPUT ""
+OUTPUT "Appending to file..."
+OPENFILE "output.txt" FOR APPEND
+WRITEFILE "output.txt", "Appended line 1"
+WRITEFILE "output.txt", "Appended line 2"
+CLOSEFILE "output.txt"
+OUTPUT "Append complete!"

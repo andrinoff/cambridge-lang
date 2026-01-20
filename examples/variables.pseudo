@@ -1,0 +1,21 @@
+// Variables and Constants Example
+// Demonstrates DECLARE, CONSTANT, and assignment
+
+DECLARE Name : STRING
+DECLARE Age : INTEGER
+DECLARE Height : REAL
+DECLARE IsStudent : BOOLEAN
+
+CONSTANT PI = 3.14159
+CONSTANT GREETING = "Hello"
+
+Name <- "Alice"
+Age <- 17
+Height <- 1.65
+IsStudent <- TRUE
+
+OUTPUT GREETING, " ", Name, "!"
+OUTPUT "Age: ", Age
+OUTPUT "Height: ", Height, " meters"
+OUTPUT "Is a student: ", IsStudent
+OUTPUT "PI = ", PI

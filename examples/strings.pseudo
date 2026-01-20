@@ -1,0 +1,50 @@
+// String Functions Example
+// Demonstrates built-in string manipulation functions
+
+DECLARE Text : STRING
+DECLARE Ch : CHAR
+DECLARE Result : STRING
+DECLARE I : INTEGER
+
+Text <- "Hello, World!"
+
+OUTPUT "Original: ", Text
+OUTPUT "Length: ", LENGTH(Text)
+OUTPUT ""
+
+// LEFT, RIGHT, MID functions
+OUTPUT "LEFT(Text, 5): ", LEFT(Text, 5)
+OUTPUT "RIGHT(Text, 6): ", RIGHT(Text, 6)
+OUTPUT "MID(Text, 8, 5): ", MID(Text, 8, 5)
+OUTPUT ""
+
+// Case conversion
+OUTPUT "UCASE: ", UCASE(Text)
+OUTPUT "LCASE: ", LCASE(Text)
+OUTPUT ""
+
+// ASCII functions
+Ch <- 'A'
+OUTPUT "Character: ", Ch
+OUTPUT "ASC('A'): ", ASC(Ch)
+OUTPUT "CHR(66): ", CHR(66)
+OUTPUT ""
+
+// String concatenation
+DECLARE FirstName : STRING
+DECLARE LastName : STRING
+DECLARE FullName : STRING
+
+FirstName <- "John"
+LastName <- "Smith"
+FullName <- FirstName & " " & LastName
+OUTPUT "Full Name: ", FullName
+OUTPUT ""
+
+// Building a string character by character
+OUTPUT "Alphabet (A-Z):"
+Result <- ""
+FOR I <- 65 TO 90
+    Result <- Result & CHR(I)
+NEXT I
+OUTPUT Result

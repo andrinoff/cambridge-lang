@@ -1,0 +1,40 @@
+// Loops Example
+// Demonstrates FOR, WHILE, and REPEAT loops
+
+DECLARE i : INTEGER
+DECLARE Sum : INTEGER
+DECLARE Count : INTEGER
+
+// FOR loop - count from 1 to 5
+OUTPUT "FOR loop:"
+FOR i <- 1 TO 5
+    OUTPUT "i = ", i
+NEXT i
+
+// FOR loop with STEP
+OUTPUT ""
+OUTPUT "FOR loop with STEP 2:"
+FOR i <- 0 TO 10 STEP 2
+    OUTPUT i
+NEXT i
+
+// WHILE loop - sum numbers until sum > 50
+OUTPUT ""
+OUTPUT "WHILE loop (sum until > 50):"
+Sum <- 0
+Count <- 0
+WHILE Sum <= 50
+    Count <- Count + 1
+    Sum <- Sum + Count
+    OUTPUT "Count: ", Count, " Sum: ", Sum
+ENDWHILE
+
+// REPEAT loop - count down from 5
+OUTPUT ""
+OUTPUT "REPEAT loop (countdown):"
+i <- 5
+REPEAT
+    OUTPUT i
+    i <- i - 1
+UNTIL i = 0
+OUTPUT "Liftoff!"

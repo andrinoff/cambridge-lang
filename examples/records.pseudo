@@ -1,0 +1,37 @@
+// Records Example
+// Demonstrates user-defined TYPE (record/composite data type)
+
+// Define a Student record type
+TYPE Student
+    DECLARE FirstName : STRING
+    DECLARE LastName : STRING
+    DECLARE Age : INTEGER
+    DECLARE Grade : CHAR
+ENDTYPE
+
+// Declare student variables
+DECLARE Student1 : Student
+DECLARE Student2 : Student
+
+// Assign values
+Student1.FirstName <- "Alice"
+Student1.LastName <- "Johnson"
+Student1.Age <- 17
+Student1.Grade <- 'A'
+
+Student2.FirstName <- "Bob"
+Student2.LastName <- "Smith"
+Student2.Age <- 16
+Student2.Grade <- 'B'
+
+// Display student information
+OUTPUT "Student 1:"
+OUTPUT "  Name: ", Student1.FirstName, " ", Student1.LastName
+OUTPUT "  Age: ", Student1.Age
+OUTPUT "  Grade: ", Student1.Grade
+OUTPUT ""
+
+OUTPUT "Student 2:"
+OUTPUT "  Name: ", Student2.FirstName, " ", Student2.LastName
+OUTPUT "  Age: ", Student2.Age
+OUTPUT "  Grade: ", Student2.Grade

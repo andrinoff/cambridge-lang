@@ -1,0 +1,42 @@
+// Selection Example
+// Demonstrates IF/THEN/ELSE and CASE statements
+
+DECLARE Score : INTEGER
+DECLARE Grade : STRING
+
+Score <- 75
+
+// IF statement example
+IF Score >= 90 THEN
+    Grade <- "A"
+ELSE
+    IF Score >= 80 THEN
+        Grade <- "B"
+    ELSE
+        IF Score >= 70 THEN
+            Grade <- "C"
+        ELSE
+            IF Score >= 60 THEN
+                Grade <- "D"
+            ELSE
+                Grade <- "F"
+            ENDIF
+        ENDIF
+    ENDIF
+ENDIF
+
+OUTPUT "Score: ", Score, " Grade: ", Grade
+
+// CASE statement example
+DECLARE DayNumber : INTEGER
+DayNumber <- 3
+
+CASE OF DayNumber
+    1 : OUTPUT "Monday"
+    2 : OUTPUT "Tuesday"
+    3 : OUTPUT "Wednesday"
+    4 : OUTPUT "Thursday"
+    5 : OUTPUT "Friday"
+    6, 7 : OUTPUT "Weekend"
+    OTHERWISE : OUTPUT "Invalid day"
+ENDCASE

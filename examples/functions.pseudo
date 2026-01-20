@@ -1,0 +1,57 @@
+// Functions and Procedures Example
+// Demonstrates PROCEDURE and FUNCTION declarations
+
+// Simple procedure
+PROCEDURE Greet(Name : STRING)
+    OUTPUT "Hello, ", Name, "!"
+ENDPROCEDURE
+
+// Function to calculate factorial
+FUNCTION Factorial(N : INTEGER) RETURNS INTEGER
+    DECLARE Result : INTEGER
+    DECLARE I : INTEGER
+    Result <- 1
+    FOR I <- 1 TO N
+        Result <- Result * I
+    NEXT I
+    RETURN Result
+ENDFUNCTION
+
+// Function to check if a number is prime
+FUNCTION IsPrime(N : INTEGER) RETURNS BOOLEAN
+    DECLARE I : INTEGER
+    IF N < 2 THEN
+        RETURN FALSE
+    ENDIF
+    FOR I <- 2 TO N - 1
+        IF N MOD I = 0 THEN
+            RETURN FALSE
+        ENDIF
+    NEXT I
+    RETURN TRUE
+ENDFUNCTION
+
+// Function with multiple parameters
+FUNCTION Max(A : INTEGER, B : INTEGER) RETURNS INTEGER
+    IF A > B THEN
+        RETURN A
+    ELSE
+        RETURN B
+    ENDIF
+ENDFUNCTION
+
+// Main program
+CALL Greet("World")
+
+OUTPUT ""
+OUTPUT "Factorial of 5: ", Factorial(5)
+OUTPUT "Factorial of 7: ", Factorial(7)
+
+OUTPUT ""
+OUTPUT "Is 7 prime? ", IsPrime(7)
+OUTPUT "Is 10 prime? ", IsPrime(10)
+OUTPUT "Is 13 prime? ", IsPrime(13)
+
+OUTPUT ""
+OUTPUT "Max of 10 and 25: ", Max(10, 25)
+OUTPUT "Max of 100 and 50: ", Max(100, 50)

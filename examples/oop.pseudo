@@ -1,0 +1,72 @@
+// Object-Oriented Programming Example
+// Demonstrates CLASS, INHERITS, PUBLIC, PRIVATE, and NEW
+
+// Base class: Animal
+CLASS Animal
+    PRIVATE Name : STRING
+    PRIVATE Age : INTEGER
+
+    PUBLIC PROCEDURE NEW(GivenName : STRING, GivenAge : INTEGER)
+        Name <- GivenName
+        Age <- GivenAge
+    ENDPROCEDURE
+
+    PUBLIC FUNCTION GetName() RETURNS STRING
+        RETURN Name
+    ENDFUNCTION
+
+    PUBLIC FUNCTION GetAge() RETURNS INTEGER
+        RETURN Age
+    ENDFUNCTION
+
+    PUBLIC PROCEDURE Speak()
+        OUTPUT Name, " makes a sound"
+    ENDPROCEDURE
+ENDCLASS
+
+// Derived class: Dog
+CLASS Dog INHERITS Animal
+    PRIVATE Breed : STRING
+
+    PUBLIC PROCEDURE NEW(GivenName : STRING, GivenAge : INTEGER, GivenBreed : STRING)
+        SUPER.NEW(GivenName, GivenAge)
+        Breed <- GivenBreed
+    ENDPROCEDURE
+
+    PUBLIC PROCEDURE Speak()
+        OUTPUT GetName(), " barks: Woof!"
+    ENDPROCEDURE
+
+    PUBLIC FUNCTION GetBreed() RETURNS STRING
+        RETURN Breed
+    ENDFUNCTION
+ENDCLASS
+
+// Derived class: Cat
+CLASS Cat INHERITS Animal
+    PUBLIC PROCEDURE NEW(GivenName : STRING, GivenAge : INTEGER)
+        SUPER.NEW(GivenName, GivenAge)
+    ENDPROCEDURE
+
+    PUBLIC PROCEDURE Speak()
+        OUTPUT GetName(), " meows: Meow!"
+    ENDPROCEDURE
+ENDCLASS
+
+// Main program
+DECLARE MyDog : Dog
+DECLARE MyCat : Cat
+
+MyDog <- NEW Dog("Buddy", 3, "Golden Retriever")
+MyCat <- NEW Cat("Whiskers", 5)
+
+OUTPUT "My dog's name: ", MyDog.GetName()
+OUTPUT "My dog's age: ", MyDog.GetAge()
+OUTPUT "My dog's breed: ", MyDog.GetBreed()
+CALL MyDog.Speak()
+
+OUTPUT ""
+
+OUTPUT "My cat's name: ", MyCat.GetName()
+OUTPUT "My cat's age: ", MyCat.GetAge()
+CALL MyCat.Speak()

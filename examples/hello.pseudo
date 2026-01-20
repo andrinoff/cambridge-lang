@@ -1,0 +1,5 @@
+// Hello World - Cambridge Pseudocode
+// Basic example demonstrating OUTPUT statement
+
+OUTPUT "Hello, World!"
+OUTPUT "Welcome to Cambridge Pseudocode"
