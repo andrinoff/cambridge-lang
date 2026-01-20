@@ -22,16 +22,23 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for release notes generation
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: "1.23"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
 
       - name: Configure Git User
         run: |
@@ -41,10 +48,9 @@ jobs:
       - name: Bump Version Everywhere
         id: bump_version
         run: |
-          # 1. Read current version
-          # Defaults to 0.0.0 if VERSION file doesn't exist yet
+          # 1. Read current version from VERSION file (source of truth)
           if [ -f VERSION ]; then
-            CURRENT_VERSION=$(cat VERSION)
+            CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
           else
             CURRENT_VERSION="0.0.0"
           fi
@@ -65,90 +71,133 @@ jobs:
           fi
           NEW_VERSION="$major.$minor.$patch"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "PREVIOUS_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
           echo "Bumping version from $CURRENT_VERSION to $NEW_VERSION"
 
           # =======================================================
-          # 3. UPDATE ALL FILES
+          # 3. UPDATE ALL VERSION FILES
           # =======================================================
 
           # A. Source of Truth
           echo "$NEW_VERSION" > VERSION
 
           # B. VS Code Extension (package.json)
-          # Uses jq to reliably update the JSON field
           tmp=$(mktemp)
           jq --arg v "$NEW_VERSION" '.version = $v' editors/vscode/package.json > "$tmp" && mv "$tmp" editors/vscode/package.json
 
           # C. Zed Extension Metadata (extension.toml)
-          # Replaces 'version = "x.y.z"' with new version
           sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" editors/zed/extension.toml
 
-          # D. Zed Rust Code (lib.rs)
-          # Updates the download URL: .../releases/download/vX.Y.Z/...
-          # This is critical so Zed downloads the NEW binary
+          # D. Zed Extension Cargo.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" editors/zed/Cargo.toml
+
+          # E. Zed Rust Code (lib.rs) - Update download URLs
           sed -i "s|releases/download/v[0-9]*\.[0-9]*\.[0-9]*|releases/download/v$NEW_VERSION|g" editors/zed/src/lib.rs
 
-          # E. Makefile
-          # Replaces 'VERSION=x.y.z'
+          # F. Zed Extension grammar rev (extension.toml) - Update to new tag
+          sed -i "s/^rev = \".*\"/rev = \"v$NEW_VERSION\"/" editors/zed/extension.toml
+
+          # G. Makefile
           sed -i "s/^VERSION=.*/VERSION=$NEW_VERSION/" Makefile
 
-          # F. Go CLI (main.go)
-          # Replaces 'const VERSION = "x.y.z"'
+          # H. Go CLI (main.go)
           sed -i "s/const VERSION = \".*\"/const VERSION = \"$NEW_VERSION\"/" cmd/cambridge/main.go
 
+          # I. Tree-sitter grammar (package.json)
+          tmp=$(mktemp)
+          jq --arg v "$NEW_VERSION" '.version = $v' tree-sitter-cambridge/package.json > "$tmp" && mv "$tmp" tree-sitter-cambridge/package.json
+
+          # J. Tree-sitter grammar Cargo.toml
+          sed -i "0,/^version = \".*\"/s//version = \"$NEW_VERSION\"/" tree-sitter-cambridge/Cargo.toml
+
       # --- 4. COMPILE GO BINARIES ---
+      # Binary names must match what Zed extension expects in lib.rs
       - name: Build Go Binaries
         run: |
           mkdir -p build_assets
-          platforms=("linux/amd64" "darwin/amd64" "darwin/arm64" "windows/amd64")
 
-          for platform in "${platforms[@]}"; do
-            IFS="/" read -r -a split <<< "$platform"
-            GOOS=${split[0]}
-            GOARCH=${split[1]}
-            EXT=""; if [ "$GOOS" == "windows" ]; then EXT=".exe"; fi
+          echo "Building cambridge-lsp-linux..."
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-linux ./cmd/cambridge-lsp
 
-            # These names MUST match the logic in your editors/zed/src/lib.rs
-            LSP_NAME="cambridge-lsp-${GOOS}-${GOARCH}${EXT}"
-            INT_NAME="cambridge-${GOOS}-${GOARCH}${EXT}"
+          echo "Building cambridge-lsp-macos-intel..."
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-macos-intel ./cmd/cambridge-lsp
 
-            echo "Building for $GOOS/$GOARCH..."
-            env GOOS=$GOOS GOARCH=$GOARCH go build -o build_assets/$LSP_NAME ./cmd/cambridge-lsp
-            env GOOS=$GOOS GOARCH=$GOARCH go build -o build_assets/$INT_NAME ./cmd/cambridge
-          done
+          echo "Building cambridge-lsp-macos-arm64..."
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp-macos-arm64 ./cmd/cambridge-lsp
+
+          echo "Building cambridge-lsp.exe..."
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-lsp.exe ./cmd/cambridge-lsp
+
+          echo "Building cambridge CLI binaries..."
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-linux-amd64 ./cmd/cambridge
+          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o build_assets/cambridge-linux-arm64 ./cmd/cambridge
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-macos-intel ./cmd/cambridge
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o build_assets/cambridge-macos-arm64 ./cmd/cambridge
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build_assets/cambridge-windows.exe ./cmd/cambridge
 
       # --- 5. PACKAGE VS CODE EXTENSION ---
-      - name: Publish VS Code Extension
+      - name: Package VS Code Extension
         working-directory: ./editors/vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           npm install
           npm install -g @vscode/vsce
-          vsce package --out ../../build_assets/cambridge-vscode-$NEW_VERSION.vsix
+          vsce package --out ../../build_assets/cambridge-vscode-${{ env.NEW_VERSION }}.vsix
 
-          # Uncomment this to actually publish to the marketplace:
-          # vsce publish -p $VSCE_PAT
+      # --- 6. PACKAGE ZED EXTENSION ---
+      - name: Package Zed Extension
+        working-directory: ./editors/zed
+        run: |
+          cargo build --release --target wasm32-wasip1
+          mkdir -p ../../build_assets/zed-extension
+          cp target/wasm32-wasip1/release/cambridge_pseudo.wasm ../../build_assets/zed-extension/extension.wasm
+          cp extension.toml ../../build_assets/zed-extension/
+          cp -r languages ../../build_assets/zed-extension/
+          cd ../../build_assets
+          zip -r cambridge-zed-${{ env.NEW_VERSION }}.zip zed-extension
+          rm -rf zed-extension
 
-      # --- 6. COMMIT & TAG ---
+      # --- 7. COMMIT & TAG ---
       - name: Commit and Push Version Bump
         run: |
-          # Add all modified files
-          git add VERSION editors/vscode/package.json editors/zed/extension.toml editors/zed/src/lib.rs Makefile cmd/cambridge/main.go
-
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-          git tag "v$NEW_VERSION"
+          git add -A
+          git commit -m "chore: release v${{ env.NEW_VERSION }} [skip ci]"
+          git tag "v${{ env.NEW_VERSION }}"
           git push origin HEAD --tags
 
-      # --- 7. GITHUB RELEASE ---
+      # --- 8. GITHUB RELEASE WITH AUTO-GENERATED NOTES ---
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.NEW_VERSION }}
           name: Release v${{ env.NEW_VERSION }}
           draft: false
           prerelease: false
-          files: build_assets/*
+          generate_release_notes: true
+          files: |
+            build_assets/cambridge-lsp-linux
+            build_assets/cambridge-lsp-macos-intel
+            build_assets/cambridge-lsp-macos-arm64
+            build_assets/cambridge-lsp.exe
+            build_assets/cambridge-linux-amd64
+            build_assets/cambridge-linux-arm64
+            build_assets/cambridge-macos-intel
+            build_assets/cambridge-macos-arm64
+            build_assets/cambridge-windows.exe
+            build_assets/cambridge-vscode-${{ env.NEW_VERSION }}.vsix
+            build_assets/cambridge-zed-${{ env.NEW_VERSION }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- 9. PUBLISH TO VS CODE MARKETPLACE ---
+      - name: Publish to VS Code Marketplace
+        working-directory: ./editors/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            echo "Publishing to VS Code Marketplace..."
+            vsce publish -p $VSCE_PAT
+          else
+            echo "VSCE_PAT not set, skipping VS Code Marketplace publish"
+          fi
