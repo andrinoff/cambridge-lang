@@ -2,6 +2,6 @@ id = "cambridge-pseudo"
 name = "Cambridge Pseudocode"
 version = "0.0.1"
 schema_version = 1
-authors = ["Your Name"]
+authors = ["andrinoff <me@andrinoff.com>"]
 description = "Support for Cambridge International AS & A Level Pseudocode"
 repository = "https://github.com/andrinoff/cambridge-lang"
