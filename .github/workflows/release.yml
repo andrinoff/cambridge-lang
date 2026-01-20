@@ -1,0 +1,154 @@
+name: Release Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Version Bump Type (major, minor, patch)"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure Git User
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Bump Version Everywhere
+        id: bump_version
+        run: |
+          # 1. Read current version
+          # Defaults to 0.0.0 if VERSION file doesn't exist yet
+          if [ -f VERSION ]; then
+            CURRENT_VERSION=$(cat VERSION)
+          else
+            CURRENT_VERSION="0.0.0"
+          fi
+
+          IFS='.' read -r -a parts <<< "$CURRENT_VERSION"
+          major=${parts[0]}
+          minor=${parts[1]}
+          patch=${parts[2]}
+
+          # 2. Calculate New Version
+          BUMP_TYPE="${{ inputs.bump_type }}"
+          if [ "$BUMP_TYPE" == "major" ]; then
+            major=$((major + 1)); minor=0; patch=0
+          elif [ "$BUMP_TYPE" == "minor" ]; then
+            minor=$((minor + 1)); patch=0
+          else
+            patch=$((patch + 1))
+          fi
+          NEW_VERSION="$major.$minor.$patch"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+          echo "Bumping version from $CURRENT_VERSION to $NEW_VERSION"
+
+          # =======================================================
+          # 3. UPDATE ALL FILES
+          # =======================================================
+
+          # A. Source of Truth
+          echo "$NEW_VERSION" > VERSION
+
+          # B. VS Code Extension (package.json)
+          # Uses jq to reliably update the JSON field
+          tmp=$(mktemp)
+          jq --arg v "$NEW_VERSION" '.version = $v' editors/vscode/package.json > "$tmp" && mv "$tmp" editors/vscode/package.json
+
+          # C. Zed Extension Metadata (extension.toml)
+          # Replaces 'version = "x.y.z"' with new version
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" editors/zed/extension.toml
+
+          # D. Zed Rust Code (lib.rs)
+          # Updates the download URL: .../releases/download/vX.Y.Z/...
+          # This is critical so Zed downloads the NEW binary
+          sed -i "s|releases/download/v[0-9]*\.[0-9]*\.[0-9]*|releases/download/v$NEW_VERSION|g" editors/zed/src/lib.rs
+
+          # E. Makefile
+          # Replaces 'VERSION=x.y.z'
+          sed -i "s/^VERSION=.*/VERSION=$NEW_VERSION/" Makefile
+
+          # F. Go CLI (main.go)
+          # Replaces 'const VERSION = "x.y.z"'
+          sed -i "s/const VERSION = \".*\"/const VERSION = \"$NEW_VERSION\"/" cmd/cambridge/main.go
+
+      # --- 4. COMPILE GO BINARIES ---
+      - name: Build Go Binaries
+        run: |
+          mkdir -p build_assets
+          platforms=("linux/amd64" "darwin/amd64" "darwin/arm64" "windows/amd64")
+
+          for platform in "${platforms[@]}"; do
+            IFS="/" read -r -a split <<< "$platform"
+            GOOS=${split[0]}
+            GOARCH=${split[1]}
+            EXT=""; if [ "$GOOS" == "windows" ]; then EXT=".exe"; fi
+
+            # These names MUST match the logic in your editors/zed/src/lib.rs
+            LSP_NAME="cambridge-lsp-${GOOS}-${GOARCH}${EXT}"
+            INT_NAME="cambridge-${GOOS}-${GOARCH}${EXT}"
+
+            echo "Building for $GOOS/$GOARCH..."
+            env GOOS=$GOOS GOARCH=$GOARCH go build -o build_assets/$LSP_NAME ./cmd/cambridge-lsp
+            env GOOS=$GOOS GOARCH=$GOARCH go build -o build_assets/$INT_NAME ./cmd/cambridge
+          done
+
+      # --- 5. PACKAGE VS CODE EXTENSION ---
+      - name: Publish VS Code Extension
+        working-directory: ./editors/vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          npm install
+          npm install -g @vscode/vsce
+          vsce package --out ../../build_assets/cambridge-vscode-$NEW_VERSION.vsix
+
+          # Uncomment this to actually publish to the marketplace:
+          # vsce publish -p $VSCE_PAT
+
+      # --- 6. COMMIT & TAG ---
+      - name: Commit and Push Version Bump
+        run: |
+          # Add all modified files
+          git add VERSION editors/vscode/package.json editors/zed/extension.toml editors/zed/src/lib.rs Makefile cmd/cambridge/main.go
+
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push origin HEAD --tags
+
+      # --- 7. GITHUB RELEASE ---
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          name: Release v${{ env.NEW_VERSION }}
+          draft: false
+          prerelease: false
+          files: build_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,6 +20,11 @@ all: build
 build:
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/cambridge
 
+# Build the Language Server Protocol
+.PHONY: build-lsp
+build-lsp:
+	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/cambridge-lsp
+
 # Build with debug symbols
 .PHONY: build-debug
 build-debug:

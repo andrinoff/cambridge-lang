@@ -139,7 +139,7 @@ type Token struct {
 }
 
 // keywords maps keyword strings to their token types
-var keywords = map[string]Type{
+var Keywords = map[string]Type{
 	// Data types
 	"INTEGER": INTEGER,
 	"REAL":    REAL,
@@ -226,7 +226,7 @@ var keywords = map[string]Type{
 
 // LookupIdent checks if an identifier is a keyword
 func LookupIdent(ident string) Type {
-	if tok, ok := keywords[ident]; ok {
+	if tok, ok := Keywords[ident]; ok {
 		return tok
 	}
 	return IDENT

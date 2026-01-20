@@ -9,7 +9,7 @@ impl CambridgeExtension {
     fn language_server_binary_path(
         &mut self,
         language_server_id: &zed::LanguageServerId,
-        worktree: &zed::Worktree,
+        _worktree: &zed::Worktree,
     ) -> Result<String> {
         // 1. Check if we already have the path cached in memory
         if let Some(path) = &self.cached_binary_path {
@@ -18,30 +18,28 @@ impl CambridgeExtension {
             }
         }
 
-        // 2. Check if the LSP is already downloaded in the extension's support directory
-        // Zed gives every extension a writable folder for this exact purpose.
         zed::set_language_server_installation_status(
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
 
-        let binary_name = "cambridge-lsp"; // Name of the file on disk
-        let binary_path = format!("./{}", binary_name); // Path relative to the support dir
+        let binary_name = "cambridge-lsp";
+        // This path is relative to the extension's installation folder (support dir)
+        let binary_path = format!("./{}", binary_name);
 
         if !fs::metadata(&binary_path)
             .map(|m| m.is_file())
             .unwrap_or(false)
         {
-            // 3. DOWNLOAD IT if missing
             zed::set_language_server_installation_status(
                 language_server_id,
                 &zed::LanguageServerInstallationStatus::Downloading,
             );
 
-            // Determine the user's OS and Architecture
             let (platform, arch) = zed::current_platform();
 
-            // Construct the download URL based on the platform
+            // When you are ready to release v0.0.2 with the new features,
+            // update these URLs to point to the new assets.
             let download_url = match (platform, arch) {
                 (zed::Os::Mac, zed::Architecture::Aarch64) =>
                     "https://github.com/andrinoff/cambridge-lang/releases/download/v0.0.1/cambridge-lsp-macos-arm64",
@@ -54,15 +52,13 @@ impl CambridgeExtension {
                 _ => return Err("Unsupported platform".into()),
             };
 
-            // Download the file
             zed::download_file(
                 &download_url,
                 &binary_path,
-                zed::DownloadedFileType::Uncompressed, // Or Gzip/Zip if you compress it
+                zed::DownloadedFileType::Uncompressed,
             )
             .map_err(|e| format!("Failed to download LSP: {}", e))?;
 
-            // Make it executable (Unix only)
             zed::make_file_executable(&binary_path)?;
         }
 

@@ -1,5 +1,4 @@
 name = "Cambridge Pseudocode"
-grammars = ["Pascal"]
 path_suffixes = ["pseudo", "psc"]
 line_comments = ["//"]
 
