@@ -201,6 +201,15 @@ func (ne *NewExpression) String() string {
 	return "NEW " + ne.ClassName + "(" + strings.Join(args, ", ") + ")"
 }
 
+// SuperExpression represents a reference to parent class: SUPER
+type SuperExpression struct {
+	Token token.Token
+}
+
+func (se *SuperExpression) expressionNode()      {}
+func (se *SuperExpression) TokenLiteral() string { return se.Token.Literal }
+func (se *SuperExpression) String() string       { return "SUPER" }
+
 // ============ STATEMENTS ============
 
 // DeclareStatement represents: DECLARE x : INTEGER
@@ -208,12 +217,18 @@ type DeclareStatement struct {
 	Token    token.Token
 	Name     *Identifier
 	DataType DataType
+	Access   string // "PUBLIC" or "PRIVATE" for class properties
 }
 
 func (ds *DeclareStatement) statementNode()       {}
 func (ds *DeclareStatement) TokenLiteral() string { return ds.Token.Literal }
 func (ds *DeclareStatement) String() string {
-	return "DECLARE " + ds.Name.String() + " : " + ds.DataType.String()
+	var out bytes.Buffer
+	if ds.Access != "" {
+		out.WriteString(ds.Access + " ")
+	}
+	out.WriteString("DECLARE " + ds.Name.String() + " : " + ds.DataType.String())
+	return out.String()
 }
 
 // ConstantStatement represents: CONSTANT PI = 3.14159

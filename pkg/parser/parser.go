@@ -85,6 +85,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.NOT, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.NEW, p.parseNewExpression)
+	p.registerPrefix(token.SUPER, p.parseSuperExpression)
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -473,9 +474,12 @@ func (p *Parser) parseRepeatStatement() *ast.RepeatStatement {
 func (p *Parser) parseProcedureStatement() *ast.ProcedureStatement {
 	stmt := &ast.ProcedureStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.IDENT) {
+	// Allow IDENT or NEW as procedure name (NEW is used for constructors)
+	if !p.peekTokenIs(token.IDENT) && !p.peekTokenIs(token.NEW) {
+		p.peekError(token.IDENT)
 		return nil
 	}
+	p.nextToken()
 
 	stmt.Name = p.curToken.Literal
 
@@ -500,9 +504,12 @@ func (p *Parser) parseProcedureStatement() *ast.ProcedureStatement {
 func (p *Parser) parseFunctionStatement() *ast.FunctionStatement {
 	stmt := &ast.FunctionStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.IDENT) {
+	// Allow IDENT or NEW as function name (though constructors are typically procedures)
+	if !p.peekTokenIs(token.IDENT) && !p.peekTokenIs(token.NEW) {
+		p.peekError(token.IDENT)
 		return nil
 	}
+	p.nextToken()
 
 	stmt.Name = p.curToken.Literal
 
@@ -835,12 +842,38 @@ func (p *Parser) parseAccessModifiedStatement() ast.Statement {
 		}
 		return stmt
 	case token.DECLARE:
-		// For class fields
-		return p.parseDeclareStatement()
+		// For class fields with DECLARE keyword
+		stmt := p.parseDeclareStatement()
+		if stmt != nil {
+			stmt.Access = access
+		}
+		return stmt
+	case token.IDENT:
+		// For class fields without DECLARE keyword: PRIVATE Name : STRING
+		stmt := p.parsePropertyDeclaration()
+		if stmt != nil {
+			stmt.Access = access
+		}
+		return stmt
 	default:
-		p.addError("expected PROCEDURE, FUNCTION, or DECLARE after access modifier")
+		p.addError("expected PROCEDURE, FUNCTION, DECLARE, or property name after access modifier")
 		return nil
 	}
+}
+
+// parsePropertyDeclaration parses: Name : TYPE (used in class definitions)
+func (p *Parser) parsePropertyDeclaration() *ast.DeclareStatement {
+	stmt := &ast.DeclareStatement{Token: p.curToken}
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	if !p.expectPeek(token.COLON) {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.DataType = p.parseDataType()
+
+	return stmt
 }
 
 func (p *Parser) parseAssignmentOrExpressionStatement() ast.Statement {
@@ -1093,12 +1126,19 @@ func (p *Parser) parseArrayAccess(array ast.Expression) ast.Expression {
 func (p *Parser) parseMemberAccess(object ast.Expression) ast.Expression {
 	exp := &ast.MemberAccess{Token: p.curToken, Object: object}
 
-	if !p.expectPeek(token.IDENT) {
+	// Allow IDENT or NEW as member name (for SUPER.NEW(...) calls)
+	if !p.peekTokenIs(token.IDENT) && !p.peekTokenIs(token.NEW) {
+		p.peekError(token.IDENT)
 		return nil
 	}
+	p.nextToken()
 
 	exp.Member = p.curToken.Literal
 	return exp
+}
+
+func (p *Parser) parseSuperExpression() ast.Expression {
+	return &ast.SuperExpression{Token: p.curToken}
 }
 
 func (p *Parser) parseNewExpression() ast.Expression {

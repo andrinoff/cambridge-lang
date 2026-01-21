@@ -762,6 +762,8 @@ func (i *Interpreter) evalExpression(expr ast.Expression, env *Environment) Obje
 		return i.evalCallExpression(expr, env)
 	case *ast.NewExpression:
 		return i.evalNewExpression(expr, env)
+	case *ast.SuperExpression:
+		return i.evalSuperExpression(expr, env)
 	default:
 		return &Error{Message: fmt.Sprintf("unknown expression type: %T", expr)}
 	}
@@ -1052,13 +1054,33 @@ func (i *Interpreter) evalMemberAccess(expr *ast.MemberAccess, env *Environment)
 		if val, ok := o.Fields[expr.Member]; ok {
 			return val
 		}
-		if method, ok := o.Class.Methods[expr.Member]; ok {
-			return method
+		// Look up method in class hierarchy
+		if method := i.lookupMethod(o.Class, expr.Member); method != nil {
+			return &BoundMethod{Instance: o, Method: method}
 		}
 		return &Error{Message: fmt.Sprintf("member not found: %s", expr.Member)}
+	case *Super:
+		// Look up method in parent class
+		if o.Class == nil {
+			return &Error{Message: "no parent class"}
+		}
+		if method := i.lookupMethod(o.Class, expr.Member); method != nil {
+			return &BoundMethod{Instance: o.Instance, Method: method}
+		}
+		return &Error{Message: fmt.Sprintf("method not found in parent class: %s", expr.Member)}
 	default:
 		return &Error{Message: "cannot access member of non-record/instance"}
 	}
+}
+
+// lookupMethod searches for a method in the class hierarchy
+func (i *Interpreter) lookupMethod(class *Class, name string) Object {
+	for c := class; c != nil; c = c.Parent {
+		if method, ok := c.Methods[name]; ok {
+			return method
+		}
+	}
+	return nil
 }
 
 func (i *Interpreter) evalCallExpression(expr *ast.CallExpression, env *Environment) Object {
@@ -1101,12 +1123,79 @@ func (i *Interpreter) applyFunction(fn Object, args []Object, callerEnv *Environ
 		evaluated := i.evalStatements(fn.Body, extendedEnv)
 		return i.unwrapReturnValue(evaluated)
 
+	case *BoundMethod:
+		return i.applyBoundMethod(fn, args, callerEnv)
+
 	case *Builtin:
 		return fn.Fn(args...)
 
 	default:
 		return &Error{Message: fmt.Sprintf("not a function: %s", fn.Type())}
 	}
+}
+
+func (i *Interpreter) applyBoundMethod(bm *BoundMethod, args []Object, callerEnv *Environment) Object {
+	// Create a method environment that has access to instance fields and methods
+	methodEnv := i.createMethodEnv(bm.Instance, callerEnv)
+
+	switch method := bm.Method.(type) {
+	case *Function:
+		// Add parameters to the environment
+		for idx, param := range method.Parameters {
+			if idx < len(args) {
+				methodEnv.Declare(param.Name, args[idx])
+			}
+		}
+		evaluated := i.evalStatements(method.Body, methodEnv)
+		return i.unwrapReturnValue(evaluated)
+
+	case *Procedure:
+		// Add parameters to the environment
+		for idx, param := range method.Parameters {
+			if idx < len(args) {
+				methodEnv.Declare(param.Name, args[idx])
+			}
+		}
+		evaluated := i.evalStatements(method.Body, methodEnv)
+		return i.unwrapReturnValue(evaluated)
+
+	default:
+		return &Error{Message: "invalid method type"}
+	}
+}
+
+// createMethodEnv creates an environment for method execution with access to instance fields and class methods
+func (i *Interpreter) createMethodEnv(instance *Instance, callerEnv *Environment) *Environment {
+	// Create a new environment enclosed by the caller's environment
+	env := NewEnclosedEnvironment(callerEnv)
+
+	// Set instance reference so field access/assignment goes through the instance
+	env.instance = instance
+
+	// Bind "this" to the instance for explicit self-reference
+	env.Declare("this", instance)
+
+	// Bind SUPER if there's a parent class
+	if instance.Class.Parent != nil {
+		env.Declare("SUPER", &Super{Instance: instance, Class: instance.Class.Parent})
+	}
+
+	// Bind class methods as bound methods (so GetName() works without this. prefix)
+	for name, method := range instance.Class.Methods {
+		env.Declare(name, &BoundMethod{Instance: instance, Method: method})
+	}
+
+	// Also bind inherited methods
+	for parent := instance.Class.Parent; parent != nil; parent = parent.Parent {
+		for name, method := range parent.Methods {
+			// Don't override if already defined (child methods take precedence)
+			if _, exists := env.store[name]; !exists {
+				env.Declare(name, &BoundMethod{Instance: instance, Method: method})
+			}
+		}
+	}
+
+	return env
 }
 
 func (i *Interpreter) extendFunctionEnv(fn *Function, args []Object, params []ast.Parameter, callerEnv *Environment) *Environment {
@@ -1150,10 +1239,8 @@ func (i *Interpreter) evalNewExpression(expr *ast.NewExpression, env *Environmen
 		Fields: make(map[string]Object),
 	}
 
-	// Initialize fields
-	for name := range class.Fields {
-		instance.Fields[name] = &Null{}
-	}
+	// Initialize fields from entire class hierarchy
+	i.initializeInstanceFields(instance, class)
 
 	// Call constructor (NEW procedure) if exists
 	if constructor, ok := class.Methods["NEW"]; ok {
@@ -1162,9 +1249,8 @@ func (i *Interpreter) evalNewExpression(expr *ast.NewExpression, env *Environmen
 			return args[0]
 		}
 
-		// Create environment with instance
-		ctorEnv := NewEnclosedEnvironment(env)
-		ctorEnv.Declare("this", instance)
+		// Create method environment with proper instance context
+		ctorEnv := i.createMethodEnv(instance, env)
 
 		if proc, ok := constructor.(*Procedure); ok {
 			for idx, param := range proc.Parameters {
@@ -1177,6 +1263,26 @@ func (i *Interpreter) evalNewExpression(expr *ast.NewExpression, env *Environmen
 	}
 
 	return instance
+}
+
+// initializeInstanceFields initializes fields from the class and all parent classes
+func (i *Interpreter) initializeInstanceFields(instance *Instance, class *Class) {
+	// First initialize parent fields
+	if class.Parent != nil {
+		i.initializeInstanceFields(instance, class.Parent)
+	}
+	// Then initialize this class's fields (may override parent fields with same name)
+	for name := range class.Fields {
+		instance.Fields[name] = &Null{}
+	}
+}
+
+func (i *Interpreter) evalSuperExpression(expr *ast.SuperExpression, env *Environment) Object {
+	// SUPER should be available in method context
+	if superObj, ok := env.Get("SUPER"); ok {
+		return superObj
+	}
+	return &Error{Message: "SUPER can only be used within a class method"}
 }
 
 // IsEOF checks if file is at EOF

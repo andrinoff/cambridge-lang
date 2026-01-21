@@ -6,6 +6,7 @@ type Environment struct {
 	constants map[string]bool
 	outer     *Environment
 	types     map[string]Object // For TYPE declarations
+	instance  *Instance         // For method execution context
 }
 
 // NewEnvironment creates a new environment
@@ -26,6 +27,12 @@ func NewEnclosedEnvironment(outer *Environment) *Environment {
 // Get retrieves a variable from the environment
 func (e *Environment) Get(name string) (Object, bool) {
 	obj, ok := e.store[name]
+	if !ok && e.instance != nil {
+		// Check instance fields
+		if val, found := e.instance.Fields[name]; found {
+			return val, true
+		}
+	}
 	if !ok && e.outer != nil {
 		obj, ok = e.outer.Get(name)
 	}
@@ -74,6 +81,13 @@ func (e *Environment) SetInPlace(name string, val Object) Object {
 		}
 		e.store[name] = val
 		return val
+	}
+	// Check if it's an instance field
+	if e.instance != nil {
+		if _, isField := e.instance.Fields[name]; isField {
+			e.instance.Fields[name] = val
+			return val
+		}
 	}
 	if e.outer != nil {
 		return e.outer.SetInPlace(name, val)

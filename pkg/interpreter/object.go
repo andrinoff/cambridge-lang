@@ -29,6 +29,8 @@ const (
 	CLASS_OBJ        ObjectType = "CLASS"
 	INSTANCE_OBJ     ObjectType = "INSTANCE"
 	FILE_OBJ         ObjectType = "FILE"
+	BOUND_METHOD_OBJ ObjectType = "BOUND_METHOD"
+	SUPER_OBJ        ObjectType = "SUPER"
 )
 
 // Object is the interface all values implement
@@ -218,6 +220,26 @@ type Instance struct {
 
 func (i *Instance) Type() ObjectType { return INSTANCE_OBJ }
 func (i *Instance) Inspect() string  { return fmt.Sprintf("<%s instance>", i.Class.Name) }
+
+// BoundMethod represents a method bound to an instance
+type BoundMethod struct {
+	Instance *Instance
+	Method   Object // Function or Procedure
+}
+
+func (bm *BoundMethod) Type() ObjectType { return BOUND_METHOD_OBJ }
+func (bm *BoundMethod) Inspect() string {
+	return fmt.Sprintf("<bound method of %s>", bm.Instance.Class.Name)
+}
+
+// Super represents a reference to the parent class from within an instance
+type Super struct {
+	Instance *Instance
+	Class    *Class // The parent class to use for method lookup
+}
+
+func (s *Super) Type() ObjectType { return SUPER_OBJ }
+func (s *Super) Inspect() string  { return "SUPER" }
 
 // File represents an open file
 type File struct {
