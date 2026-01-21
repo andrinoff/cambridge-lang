@@ -1,6 +1,6 @@
 id = "cambridge-pseudo"
 name = "Cambridge Pseudocode"
-version = "0.1.7"
+version = "0.1.8"
 schema_version = 1
 authors = ["andrinoff <me@andrinoff.com>"]
 description = "Support for Cambridge International AS & A Level Pseudocode"
