@@ -15,7 +15,7 @@ import (
 	"github.com/andrinoff/cambridge-lang/pkg/parser"
 )
 
-const VERSION = "0.1.6"
+const VERSION = "0.1.7"
 
 func main() {
 	if len(os.Args) < 2 {

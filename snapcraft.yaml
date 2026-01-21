@@ -1,5 +1,5 @@
 name: cambridge
-version: "0.1.6"
+version: "0.1.7"
 summary: Cambridge International AS & A Level Pseudocode Interpreter
 description: |
   A complete interpreter for Cambridge International AS & A Level Computer Science

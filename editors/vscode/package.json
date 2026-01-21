@@ -1,7 +1,7 @@
 {
   "name": "cambridge-pseudo",
   "displayName": "Cambridge Pseudocode Syntax",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "andrinoff",
   "icon": "logo.jpg",
   "engines": {
