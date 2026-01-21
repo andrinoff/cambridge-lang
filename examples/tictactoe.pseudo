@@ -1,0 +1,138 @@
+// Tic-Tac-Toe Game in Cambridge Pseudocode
+// A two-player game where players take turns marking X and O
+
+// Game board: positions 1-9 mapped to a 3x3 grid
+// 1 | 2 | 3
+// ---------
+// 4 | 5 | 6
+// ---------
+// 7 | 8 | 9
+
+DECLARE Board : ARRAY[1:9] OF STRING
+DECLARE CurrentPlayer : STRING
+DECLARE Winner : STRING
+DECLARE GameOver : BOOLEAN
+DECLARE MoveCount : INTEGER
+DECLARE Position : INTEGER
+DECLARE ValidMove : BOOLEAN
+DECLARE i : INTEGER
+
+// Initialize the board with position numbers
+PROCEDURE InitializeBoard()
+    DECLARE j : INTEGER
+    FOR j <- 1 TO 9
+        Board[j] <- NUM_TO_STR(j)
+    NEXT j
+ENDPROCEDURE
+
+// Display the current board state
+PROCEDURE DisplayBoard()
+    OUTPUT ""
+    OUTPUT " ", Board[1], " | ", Board[2], " | ", Board[3]
+    OUTPUT "-----------"
+    OUTPUT " ", Board[4], " | ", Board[5], " | ", Board[6]
+    OUTPUT "-----------"
+    OUTPUT " ", Board[7], " | ", Board[8], " | ", Board[9]
+    OUTPUT ""
+ENDPROCEDURE
+
+// Check if a position is valid (1-9 and not already taken)
+FUNCTION IsValidMove(Pos : INTEGER) RETURNS BOOLEAN
+    IF Pos < 1 OR Pos > 9 THEN
+        RETURN FALSE
+    ENDIF
+    IF Board[Pos] = "X" OR Board[Pos] = "O" THEN
+        RETURN FALSE
+    ENDIF
+    RETURN TRUE
+ENDFUNCTION
+
+// Check if there's a winner
+FUNCTION CheckWinner() RETURNS STRING
+    // Check rows
+    IF Board[1] = Board[2] AND Board[2] = Board[3] THEN
+        RETURN Board[1]
+    ENDIF
+    IF Board[4] = Board[5] AND Board[5] = Board[6] THEN
+        RETURN Board[4]
+    ENDIF
+    IF Board[7] = Board[8] AND Board[8] = Board[9] THEN
+        RETURN Board[7]
+    ENDIF
+
+    // Check columns
+    IF Board[1] = Board[4] AND Board[4] = Board[7] THEN
+        RETURN Board[1]
+    ENDIF
+    IF Board[2] = Board[5] AND Board[5] = Board[8] THEN
+        RETURN Board[2]
+    ENDIF
+    IF Board[3] = Board[6] AND Board[6] = Board[9] THEN
+        RETURN Board[3]
+    ENDIF
+
+    // Check diagonals
+    IF Board[1] = Board[5] AND Board[5] = Board[9] THEN
+        RETURN Board[1]
+    ENDIF
+    IF Board[3] = Board[5] AND Board[5] = Board[7] THEN
+        RETURN Board[3]
+    ENDIF
+
+    RETURN ""
+ENDFUNCTION
+
+// Switch to the other player
+PROCEDURE SwitchPlayer()
+    IF CurrentPlayer = "X" THEN
+        CurrentPlayer <- "O"
+    ELSE
+        CurrentPlayer <- "X"
+    ENDIF
+ENDPROCEDURE
+
+// Main game
+OUTPUT "=== TIC-TAC-TOE ==="
+OUTPUT "Player 1: X"
+OUTPUT "Player 2: O"
+OUTPUT "Enter position (1-9) to place your mark"
+
+CALL InitializeBoard()
+CurrentPlayer <- "X"
+GameOver <- FALSE
+MoveCount <- 0
+
+CALL DisplayBoard()
+
+WHILE NOT GameOver
+    OUTPUT "Player ", CurrentPlayer, "'s turn. Enter position (1-9):"
+    INPUT Position
+    Position <- STR_TO_NUM(Position)
+
+    ValidMove <- IsValidMove(Position)
+
+    IF ValidMove THEN
+        Board[Position] <- CurrentPlayer
+        MoveCount <- MoveCount + 1
+
+        CALL DisplayBoard()
+
+        Winner <- CheckWinner()
+
+        IF Winner <> "" THEN
+            OUTPUT "Player ", Winner, " wins!"
+            GameOver <- TRUE
+        ELSE
+            IF MoveCount = 9 THEN
+                OUTPUT "It's a draw!"
+                GameOver <- TRUE
+            ELSE
+                CALL SwitchPlayer()
+            ENDIF
+        ENDIF
+    ELSE
+        OUTPUT "Invalid move! Try again."
+    ENDIF
+ENDWHILE
+
+OUTPUT "Thanks for playing!"
