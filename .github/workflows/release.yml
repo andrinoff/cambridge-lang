@@ -95,9 +95,6 @@ jobs:
           # E. Zed Rust Code (lib.rs) - Update download URLs
           sed -i "s|releases/download/v[0-9]*\.[0-9]*\.[0-9]*|releases/download/v$NEW_VERSION|g" editors/zed/src/lib.rs
 
-          # F. Zed Extension grammar rev (extension.toml) - Update to new tag
-          sed -i "s/^rev = \".*\"/rev = \"v$NEW_VERSION\"/" editors/zed/extension.toml
-
           # G. Makefile
           sed -i "s/^VERSION=.*/VERSION=$NEW_VERSION/" Makefile
 
@@ -112,7 +109,7 @@ jobs:
           sed -i "0,/^version = \".*\"/s//version = \"$NEW_VERSION\"/" tree-sitter-cambridge/Cargo.toml
 
           # K. Snapcraft version
-          sed -i "s/^version: '.*'/version: '$NEW_VERSION'/" snapcraft.yaml
+          sed -i "s/^version: \".*\"/version: \"$NEW_VERSION\"/" snapcraft.yaml
 
       # --- 4. COMPILE GO BINARIES ---
       - name: Build Go Binaries
