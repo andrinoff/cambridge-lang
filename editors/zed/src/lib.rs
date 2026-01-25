@@ -40,13 +40,13 @@ impl CambridgeExtension {
 
             let download_url = match (platform, arch) {
                 (zed::Os::Mac, zed::Architecture::Aarch64) =>
-                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.1.8/cambridge-lsp-macos-arm64",
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.2.0/cambridge-lsp-macos-arm64",
                 (zed::Os::Mac, zed::Architecture::X8664) =>
-                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.1.8/cambridge-lsp-macos-intel",
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.2.0/cambridge-lsp-macos-intel",
                 (zed::Os::Linux, _) =>
-                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.1.8/cambridge-lsp-linux",
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.2.0/cambridge-lsp-linux",
                 (zed::Os::Windows, _) =>
-                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.1.8/cambridge-lsp.exe",
+                    "https://github.com/andrinoff/cambridge-lang/releases/download/v0.2.0/cambridge-lsp.exe",
                 _ => return Err("Unsupported platform".into()),
             };
 
