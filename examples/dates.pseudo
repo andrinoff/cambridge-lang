@@ -1,0 +1,102 @@
+// Date Functions Example
+// Demonstrates built-in date manipulation functions
+
+DECLARE MyDate : DATE
+DECLARE CurrentDate : DATE
+DECLARE BirthDate : DATE
+DECLARE DayOfWeek : INTEGER
+
+// Get today's date using TODAY()
+CurrentDate <- TODAY()
+OUTPUT "Today's date: ", CurrentDate
+OUTPUT ""
+
+// Extract components from a date using DAY(), MONTH(), YEAR()
+OUTPUT "Day: ", DAY(CurrentDate)
+OUTPUT "Month: ", MONTH(CurrentDate)
+OUTPUT "Year: ", YEAR(CurrentDate)
+OUTPUT ""
+
+// Create a specific date using SETDATE(Day, Month, Year)
+MyDate <- SETDATE(4, 10, 2003)
+OUTPUT "Created date: ", MyDate
+OUTPUT "Day: ", DAY(MyDate)
+OUTPUT "Month: ", MONTH(MyDate)
+OUTPUT "Year: ", YEAR(MyDate)
+OUTPUT ""
+
+// DAYINDEX - get day of week (Sunday = 1, Monday = 2, etc.)
+// 09/05/2023 was a Tuesday (index 3)
+MyDate <- SETDATE(9, 5, 2023)
+DayOfWeek <- DAYINDEX(MyDate)
+OUTPUT "Date: ", MyDate
+OUTPUT "Day index: ", DayOfWeek
+
+// Display the day name
+IF DayOfWeek = 1 THEN
+    OUTPUT "Day of week: Sunday"
+ELSE
+    IF DayOfWeek = 2 THEN
+        OUTPUT "Day of week: Monday"
+    ELSE
+        IF DayOfWeek = 3 THEN
+            OUTPUT "Day of week: Tuesday"
+        ELSE
+            IF DayOfWeek = 4 THEN
+                OUTPUT "Day of week: Wednesday"
+            ELSE
+                IF DayOfWeek = 5 THEN
+                    OUTPUT "Day of week: Thursday"
+                ELSE
+                    IF DayOfWeek = 6 THEN
+                        OUTPUT "Day of week: Friday"
+                    ELSE
+                        OUTPUT "Day of week: Saturday"
+                    ENDIF
+                ENDIF
+            ENDIF
+        ENDIF
+    ENDIF
+ENDIF
+OUTPUT ""
+
+// Check if today is a weekend
+CurrentDate <- TODAY()
+DayOfWeek <- DAYINDEX(CurrentDate)
+IF DayOfWeek = 1 OR DayOfWeek = 7 THEN
+    OUTPUT "Today is a weekend!"
+ELSE
+    OUTPUT "Today is a weekday."
+ENDIF
+OUTPUT ""
+
+// Example: Check what day of the week a birthday falls on
+BirthDate <- SETDATE(26, 10, 2003)
+OUTPUT "Birthday: ", BirthDate
+DayOfWeek <- DAYINDEX(BirthDate)
+
+IF DayOfWeek = 1 THEN
+    OUTPUT "This date falls on a Sunday"
+ELSE
+    IF DayOfWeek = 2 THEN
+        OUTPUT "This date falls on a Monday"
+    ELSE
+        IF DayOfWeek = 3 THEN
+            OUTPUT "This date falls on a Tuesday"
+        ELSE
+            IF DayOfWeek = 4 THEN
+                OUTPUT "This date falls on a Wednesday"
+            ELSE
+                IF DayOfWeek = 5 THEN
+                    OUTPUT "This date falls on a Thursday"
+                ELSE
+                    IF DayOfWeek = 6 THEN
+                        OUTPUT "This date falls on a Friday"
+                    ELSE
+                        OUTPUT "This date falls on a Saturday"
+                    ENDIF
+                ENDIF
+            ENDIF
+        ENDIF
+    ENDIF
+ENDIF

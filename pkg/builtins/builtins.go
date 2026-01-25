@@ -52,6 +52,14 @@ func GetBuiltins() map[string]*interpreter.Builtin {
 		"ABS":  {Name: "ABS", Fn: abs},
 		"SQRT": {Name: "SQRT", Fn: sqrt},
 		"POW":  {Name: "POW", Fn: pow},
+
+		// Date functions
+		"DAY":      {Name: "DAY", Fn: day},
+		"MONTH":    {Name: "MONTH", Fn: month},
+		"YEAR":     {Name: "YEAR", Fn: year},
+		"DAYINDEX": {Name: "DAYINDEX", Fn: dayIndex},
+		"SETDATE":  {Name: "SETDATE", Fn: setDate},
+		"TODAY":    {Name: "TODAY", Fn: today},
 	}
 }
 
@@ -447,6 +455,111 @@ func pow(args ...interpreter.Object) interpreter.Object {
 	}
 
 	return &interpreter.Real{Value: math.Pow(base, exp)}
+}
+
+// DAY(ThisDate) - returns the day number from ThisDate
+func day(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 1 {
+		return newError("DAY requires 1 argument, got %d", len(args))
+	}
+
+	date, ok := args[0].(*interpreter.Date)
+	if !ok {
+		return newError("DAY requires DATE argument, got %s", args[0].Type())
+	}
+
+	return &interpreter.Integer{Value: int64(date.Day)}
+}
+
+// MONTH(ThisDate) - returns the month number from ThisDate
+func month(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 1 {
+		return newError("MONTH requires 1 argument, got %d", len(args))
+	}
+
+	date, ok := args[0].(*interpreter.Date)
+	if !ok {
+		return newError("MONTH requires DATE argument, got %s", args[0].Type())
+	}
+
+	return &interpreter.Integer{Value: int64(date.Month)}
+}
+
+// YEAR(ThisDate) - returns the year number from ThisDate
+func year(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 1 {
+		return newError("YEAR requires 1 argument, got %d", len(args))
+	}
+
+	date, ok := args[0].(*interpreter.Date)
+	if !ok {
+		return newError("YEAR requires DATE argument, got %s", args[0].Type())
+	}
+
+	return &interpreter.Integer{Value: int64(date.Year)}
+}
+
+// DAYINDEX(ThisDate) - returns the day index number from ThisDate
+// Sunday = 1, Monday = 2, Tuesday = 3, Wednesday = 4, Thursday = 5, Friday = 6, Saturday = 7
+func dayIndex(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 1 {
+		return newError("DAYINDEX requires 1 argument, got %d", len(args))
+	}
+
+	date, ok := args[0].(*interpreter.Date)
+	if !ok {
+		return newError("DAYINDEX requires DATE argument, got %s", args[0].Type())
+	}
+
+	// Create a Go time.Time from the date components
+	t := time.Date(date.Year, time.Month(date.Month), date.Day, 0, 0, 0, 0, time.UTC)
+	// Go's Weekday: Sunday = 0, Monday = 1, ..., Saturday = 6
+	// Cambridge wants: Sunday = 1, Monday = 2, ..., Saturday = 7
+	dayOfWeek := int(t.Weekday()) + 1
+
+	return &interpreter.Integer{Value: int64(dayOfWeek)}
+}
+
+// SETDATE(Day, Month, Year) - returns a DATE with the value Day/Month/Year
+func setDate(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 3 {
+		return newError("SETDATE requires 3 arguments, got %d", len(args))
+	}
+
+	dayArg, ok := args[0].(*interpreter.Integer)
+	if !ok {
+		return newError("SETDATE requires INTEGER as first argument (Day)")
+	}
+
+	monthArg, ok := args[1].(*interpreter.Integer)
+	if !ok {
+		return newError("SETDATE requires INTEGER as second argument (Month)")
+	}
+
+	yearArg, ok := args[2].(*interpreter.Integer)
+	if !ok {
+		return newError("SETDATE requires INTEGER as third argument (Year)")
+	}
+
+	return &interpreter.Date{
+		Day:   int(dayArg.Value),
+		Month: int(monthArg.Value),
+		Year:  int(yearArg.Value),
+	}
+}
+
+// TODAY() - returns a DATE corresponding to the current date
+func today(args ...interpreter.Object) interpreter.Object {
+	if len(args) != 0 {
+		return newError("TODAY requires 0 arguments, got %d", len(args))
+	}
+
+	now := time.Now()
+	return &interpreter.Date{
+		Day:   now.Day(),
+		Month: int(now.Month()),
+		Year:  now.Year(),
+	}
 }
 
 func newError(format string, a ...interface{}) *interpreter.Error {

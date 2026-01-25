@@ -18,6 +18,7 @@ const (
 	STRING_OBJ       ObjectType = "STRING"
 	CHAR_OBJ         ObjectType = "CHAR"
 	BOOLEAN_OBJ      ObjectType = "BOOLEAN"
+	DATE_OBJ         ObjectType = "DATE"
 	NULL_OBJ         ObjectType = "NULL"
 	RETURN_VALUE_OBJ ObjectType = "RETURN_VALUE"
 	ERROR_OBJ        ObjectType = "ERROR"
@@ -70,6 +71,16 @@ type Char struct {
 
 func (c *Char) Type() ObjectType { return CHAR_OBJ }
 func (c *Char) Inspect() string  { return string(c.Value) }
+
+// Date represents a date value (day, month, year)
+type Date struct {
+	Day   int
+	Month int
+	Year  int
+}
+
+func (d *Date) Type() ObjectType { return DATE_OBJ }
+func (d *Date) Inspect() string  { return fmt.Sprintf("%02d/%02d/%04d", d.Day, d.Month, d.Year) }
 
 // Boolean represents a boolean value
 type Boolean struct {

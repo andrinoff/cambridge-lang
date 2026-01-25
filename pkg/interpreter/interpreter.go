@@ -135,6 +135,8 @@ func (i *Interpreter) evalDeclareStatement(stmt *ast.DeclareStatement, env *Envi
 			value = &Char{Value: ' '}
 		case "BOOLEAN":
 			value = &Boolean{Value: false}
+		case "DATE":
+			value = &Date{Day: 1, Month: 1, Year: 1970}
 		default:
 			value = &Null{}
 		}

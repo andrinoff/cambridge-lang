@@ -685,3 +685,311 @@ func TestBuiltinNames(t *testing.T) {
 		}
 	}
 }
+
+// Date function tests
+
+func TestDay(t *testing.T) {
+	tests := []struct {
+		day      int
+		month    int
+		year     int
+		expected int64
+	}{
+		{4, 10, 2003, 4},
+		{1, 1, 2000, 1},
+		{31, 12, 2023, 31},
+		{15, 6, 1990, 15},
+	}
+
+	builtins := GetBuiltins()
+	dayFn := builtins["DAY"]
+
+	for _, tt := range tests {
+		result := dayFn.Fn(&interpreter.Date{Day: tt.day, Month: tt.month, Year: tt.year})
+
+		intResult, ok := result.(*interpreter.Integer)
+		if !ok {
+			t.Fatalf("expected Integer, got %T", result)
+		}
+
+		if intResult.Value != tt.expected {
+			t.Errorf("DAY(%02d/%02d/%04d) = %d, want %d",
+				tt.day, tt.month, tt.year, intResult.Value, tt.expected)
+		}
+	}
+}
+
+func TestDayWrongArgType(t *testing.T) {
+	builtins := GetBuiltins()
+	dayFn := builtins["DAY"]
+
+	result := dayFn.Fn(&interpreter.String{Value: "04/10/2003"})
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+}
+
+func TestMonth(t *testing.T) {
+	tests := []struct {
+		day      int
+		month    int
+		year     int
+		expected int64
+	}{
+		{4, 10, 2003, 10},
+		{1, 1, 2000, 1},
+		{31, 12, 2023, 12},
+		{15, 6, 1990, 6},
+	}
+
+	builtins := GetBuiltins()
+	monthFn := builtins["MONTH"]
+
+	for _, tt := range tests {
+		result := monthFn.Fn(&interpreter.Date{Day: tt.day, Month: tt.month, Year: tt.year})
+
+		intResult, ok := result.(*interpreter.Integer)
+		if !ok {
+			t.Fatalf("expected Integer, got %T", result)
+		}
+
+		if intResult.Value != tt.expected {
+			t.Errorf("MONTH(%02d/%02d/%04d) = %d, want %d",
+				tt.day, tt.month, tt.year, intResult.Value, tt.expected)
+		}
+	}
+}
+
+func TestMonthWrongArgType(t *testing.T) {
+	builtins := GetBuiltins()
+	monthFn := builtins["MONTH"]
+
+	result := monthFn.Fn(&interpreter.Integer{Value: 10})
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+}
+
+func TestYear(t *testing.T) {
+	tests := []struct {
+		day      int
+		month    int
+		year     int
+		expected int64
+	}{
+		{4, 10, 2003, 2003},
+		{1, 1, 2000, 2000},
+		{31, 12, 2023, 2023},
+		{15, 6, 1990, 1990},
+	}
+
+	builtins := GetBuiltins()
+	yearFn := builtins["YEAR"]
+
+	for _, tt := range tests {
+		result := yearFn.Fn(&interpreter.Date{Day: tt.day, Month: tt.month, Year: tt.year})
+
+		intResult, ok := result.(*interpreter.Integer)
+		if !ok {
+			t.Fatalf("expected Integer, got %T", result)
+		}
+
+		if intResult.Value != tt.expected {
+			t.Errorf("YEAR(%02d/%02d/%04d) = %d, want %d",
+				tt.day, tt.month, tt.year, intResult.Value, tt.expected)
+		}
+	}
+}
+
+func TestYearWrongArgType(t *testing.T) {
+	builtins := GetBuiltins()
+	yearFn := builtins["YEAR"]
+
+	result := yearFn.Fn(&interpreter.Real{Value: 2003.0})
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+}
+
+func TestDayIndex(t *testing.T) {
+	// Day index: Sunday = 1, Monday = 2, ..., Saturday = 7
+	tests := []struct {
+		day      int
+		month    int
+		year     int
+		expected int64
+		desc     string
+	}{
+		{9, 5, 2023, 3, "Tuesday"},   // 09/05/2023 is a Tuesday
+		{7, 5, 2023, 1, "Sunday"},    // 07/05/2023 is a Sunday
+		{8, 5, 2023, 2, "Monday"},    // 08/05/2023 is a Monday
+		{13, 5, 2023, 7, "Saturday"}, // 13/05/2023 is a Saturday
+		{1, 1, 2000, 7, "Saturday"},  // 01/01/2000 is a Saturday
+		{25, 12, 2023, 2, "Monday"},  // Christmas 2023 is a Monday
+	}
+
+	builtins := GetBuiltins()
+	dayIndexFn := builtins["DAYINDEX"]
+
+	for _, tt := range tests {
+		result := dayIndexFn.Fn(&interpreter.Date{Day: tt.day, Month: tt.month, Year: tt.year})
+
+		intResult, ok := result.(*interpreter.Integer)
+		if !ok {
+			t.Fatalf("expected Integer, got %T", result)
+		}
+
+		if intResult.Value != tt.expected {
+			t.Errorf("DAYINDEX(%02d/%02d/%04d) = %d, want %d (%s)",
+				tt.day, tt.month, tt.year, intResult.Value, tt.expected, tt.desc)
+		}
+	}
+}
+
+func TestDayIndexWrongArgType(t *testing.T) {
+	builtins := GetBuiltins()
+	dayIndexFn := builtins["DAYINDEX"]
+
+	result := dayIndexFn.Fn(&interpreter.String{Value: "09/05/2023"})
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+}
+
+func TestSetDate(t *testing.T) {
+	tests := []struct {
+		day   int64
+		month int64
+		year  int64
+	}{
+		{26, 10, 2003},
+		{1, 1, 2000},
+		{31, 12, 2023},
+		{15, 6, 1990},
+	}
+
+	builtins := GetBuiltins()
+	setDateFn := builtins["SETDATE"]
+
+	for _, tt := range tests {
+		result := setDateFn.Fn(
+			&interpreter.Integer{Value: tt.day},
+			&interpreter.Integer{Value: tt.month},
+			&interpreter.Integer{Value: tt.year},
+		)
+
+		dateResult, ok := result.(*interpreter.Date)
+		if !ok {
+			t.Fatalf("expected Date, got %T", result)
+		}
+
+		if dateResult.Day != int(tt.day) || dateResult.Month != int(tt.month) || dateResult.Year != int(tt.year) {
+			t.Errorf("SETDATE(%d, %d, %d) = %02d/%02d/%04d, want %02d/%02d/%04d",
+				tt.day, tt.month, tt.year,
+				dateResult.Day, dateResult.Month, dateResult.Year,
+				tt.day, tt.month, tt.year)
+		}
+	}
+}
+
+func TestSetDateWrongArgCount(t *testing.T) {
+	builtins := GetBuiltins()
+	setDateFn := builtins["SETDATE"]
+
+	result := setDateFn.Fn(
+		&interpreter.Integer{Value: 26},
+		&interpreter.Integer{Value: 10},
+	)
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg count, got %T", result)
+	}
+}
+
+func TestSetDateWrongArgType(t *testing.T) {
+	builtins := GetBuiltins()
+	setDateFn := builtins["SETDATE"]
+
+	// Wrong type for day
+	result := setDateFn.Fn(
+		&interpreter.String{Value: "26"},
+		&interpreter.Integer{Value: 10},
+		&interpreter.Integer{Value: 2003},
+	)
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+
+	// Wrong type for month
+	result = setDateFn.Fn(
+		&interpreter.Integer{Value: 26},
+		&interpreter.String{Value: "10"},
+		&interpreter.Integer{Value: 2003},
+	)
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+
+	// Wrong type for year
+	result = setDateFn.Fn(
+		&interpreter.Integer{Value: 26},
+		&interpreter.Integer{Value: 10},
+		&interpreter.Real{Value: 2003.0},
+	)
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg type, got %T", result)
+	}
+}
+
+func TestToday(t *testing.T) {
+	builtins := GetBuiltins()
+	todayFn := builtins["TODAY"]
+
+	result := todayFn.Fn()
+
+	dateResult, ok := result.(*interpreter.Date)
+	if !ok {
+		t.Fatalf("expected Date, got %T", result)
+	}
+
+	// Just verify that it returns a reasonable date (day 1-31, month 1-12, year > 2000)
+	if dateResult.Day < 1 || dateResult.Day > 31 {
+		t.Errorf("TODAY() returned invalid day: %d", dateResult.Day)
+	}
+	if dateResult.Month < 1 || dateResult.Month > 12 {
+		t.Errorf("TODAY() returned invalid month: %d", dateResult.Month)
+	}
+	if dateResult.Year < 2000 {
+		t.Errorf("TODAY() returned invalid year: %d", dateResult.Year)
+	}
+}
+
+func TestTodayWrongArgCount(t *testing.T) {
+	builtins := GetBuiltins()
+	todayFn := builtins["TODAY"]
+
+	result := todayFn.Fn(&interpreter.Integer{Value: 1})
+
+	if _, ok := result.(*interpreter.Error); !ok {
+		t.Errorf("expected Error for wrong arg count, got %T", result)
+	}
+}
+
+func TestDateBuiltinsRegistered(t *testing.T) {
+	builtins := GetBuiltins()
+
+	dateFunctions := []string{"DAY", "MONTH", "YEAR", "DAYINDEX", "SETDATE", "TODAY"}
+
+	for _, name := range dateFunctions {
+		if _, ok := builtins[name]; !ok {
+			t.Errorf("date builtin %s not found", name)
+		}
+	}
+}
