@@ -38,8 +38,6 @@ impl CambridgeExtension {
 
             let (platform, arch) = zed::current_platform();
 
-            // When you are ready to release v0.0.2 with the new features,
-            // update these URLs to point to the new assets.
             let download_url = match (platform, arch) {
                 (zed::Os::Mac, zed::Architecture::Aarch64) =>
                     "https://github.com/andrinoff/cambridge-lang/releases/download/v0.1.8/cambridge-lsp-macos-arm64",
