@@ -2,6 +2,16 @@
 
 A fully-featured interpreter for the Cambridge International AS & A Level Computer Science (9618) pseudocode language.
 
+## Extensions
+
+Extensions are available for:
+
+* **Visual Studio Code**
+    * [Marketplace](https://marketplace.visualstudio.com/items?itemName=andrinoff.cambridge-pseudo)
+    * [Pre-built](https://github.com/andrinoff/cambridge-lang/releases)
+* **Zed**
+    * To install, download the .zip file from [releases](https://github.com/andrinoff/cambridge-lang/releases) and extract it. Go into Zed -> Cmd(Ctrl)+Shift+P -> Install dev extension -> Choose the folder
+
 ## Overview
 
 This project implements an interpreter for the pseudocode specification used in Cambridge International AS & A Level Computer Science examinations. It supports all major language features including:
