@@ -1,3 +1,6 @@
+> [!WARNING]
+> This project is not under active development. If you want this project to continue, please consider contributing or [sponsoring](https://andrinoff.com/sponsor).
+
 # Cambridge Pseudocode Interpreter
 
 A fully-featured interpreter for the Cambridge International AS & A Level Computer Science (9618) pseudocode language.
